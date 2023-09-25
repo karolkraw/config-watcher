@@ -1,14 +1,44 @@
+# comment
 apiVersion: v1
-kind: Pod
+kind: Service
 metadata:
-  name: demo-service
   labels:
-    app: demo-service
-  namespace: namespace1
+     run: demo
+  name: demo-service
+  annotations:
+    boot.spring.io/actuator: http://:8080/actuator
 spec:
-  serviceAccountName: default
-  containers:
-  - name: demo-service
-    image: amit4sun/demo-service:5.0
-    ports:
-    - containerPort: 80
+  ports:
+    - name: http
+      port: 8080
+      targetPort: 8080
+  selector:
+     run: demo
+  type: ClusterIP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: demo
+spec:
+  selector:
+    matchLabels:
+      run: demo
+  replicas: 1
+  strategy: 
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+  template:
+    metadata:
+      labels:
+        run: demo
+    spec:
+      serviceAccountName: spring-cloud-kubernetes-configuration-watcher
+      containers:
+      - name: demo-service
+        image: karol8650/demo-app:latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8080
+   
